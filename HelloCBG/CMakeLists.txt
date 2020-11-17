@@ -43,6 +43,10 @@ set(MAIN hello_callback_group)
 add_executable(${MAIN} src/main.cpp)
 ament_target_dependencies(${MAIN} ${DEPENDS})
 
+set(MAIN hello_callback_group_diff_priority)
+add_executable(${MAIN} src/main_different_priority.cpp)
+ament_target_dependencies(${MAIN} ${DEPENDS})
+
 install(TARGETS
   ${MAIN}
   DESTINATION lib/${PROJECT_NAME})
