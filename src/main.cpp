@@ -7,16 +7,19 @@
 using namespace std::chrono_literals;
 
 template<typename AllocatorT = std::allocator<void>>
-class MinimalPublisher : public rclcpp::Node
+class MinimalPubSub : public rclcpp::Node
 {
 public:
-  MinimalPublisher(rclcpp::CallbackGroup::SharedPtr cb = nullptr)
-  : Node("minimal_publisher"), count_(0)
+  MinimalPubSub()
+  : Node("minimal_pubsub"), count_(0)
   {
-    rclcpp::PublisherOptionsWithAllocator<AllocatorT> options;
-    options.callback_group = cb;
+    auto cb = create_callback_group(rclcpp::CallbackGroupType::Reentrant);
 
-    publisher_ = this->create_publisher<std_msgs::msg::String>("topic", 10, options);
+    // publisher & its timer
+    rclcpp::PublisherOptionsWithAllocator<AllocatorT> pub_options;
+    pub_options.callback_group = cb;
+
+    publisher_ = this->create_publisher<std_msgs::msg::String>("topic", 10, pub_options);
     auto timer_callback =
       [this]() -> void {
         auto message = std_msgs::msg::String();
@@ -25,48 +28,34 @@ public:
         this->publisher_->publish(message);
       };
     timer_ = this->create_wall_timer(500ms, timer_callback, cb);
-  }
 
-private:
-  rclcpp::TimerBase::SharedPtr timer_;
-  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_;
-  size_t count_;
-};
-
-template<typename AllocatorT = std::allocator<void>>
-class MinimalSubscriber : public rclcpp::Node
-{
-public:
-  MinimalSubscriber(rclcpp::CallbackGroup::SharedPtr cb = nullptr)
-  : Node("minimal_subscriber")
-  {
-    rclcpp::SubscriptionOptionsWithAllocator<AllocatorT> options;
-    options.callback_group = cb;
+    // subscriber
+    rclcpp::SubscriptionOptionsWithAllocator<AllocatorT> sub_options;
+    sub_options.callback_group = cb;
     subscription_ = this->create_subscription<std_msgs::msg::String>(
       "topic",
       10,
       [this](std_msgs::msg::String::UniquePtr msg) {
         RCLCPP_INFO(this->get_logger(), "I heard: '%s'", msg->data.c_str());
       },
-      options);
+      sub_options);
   }
 
 private:
+  rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_;
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr subscription_;
+  size_t count_;
 };
 
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
 
-  auto node = std::make_shared<rclcpp::Node>("no_use");
-  auto cb = node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  auto pub_node = std::make_shared<MinimalPublisher<>>(cb);
-  auto sub_node = std::make_shared<MinimalSubscriber<>>(cb);
+  auto node = std::make_shared<MinimalPubSub<>>();
 
   auto exec = std::make_shared<rclcpp::executors::StaticSingleThreadedExecutor>();
-  exec->add_node(pub_node);
-  exec->add_node(sub_node);
+  exec->add_node(node);
 
   exec->spin();
   rclcpp::shutdown();
