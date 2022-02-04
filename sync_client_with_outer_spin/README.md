@@ -54,9 +54,14 @@ a=20 かはまた返る様になります。
 
 ## 実装
 
+[rclcpp::SyncPamametersClient](https://github.com/ros2/rclcpp/blob/d3c0049b24f91b9bacdfa255dbdee8297862118c/rclcpp/include/rclcpp/parameter_client.hpp#L341) では内部に Executor を作っているので、真似してやってみた。
+今回の実装だと子 Node を別に作ったが一緒でもよかったかもしれない(SyncParametersClient の方は Node を別に作っているかは未チェック)。
+
 - ClientNode でクライアント用の子ノードと子エグゼキュータを確保して子エグゼキュータで `spin_until_future_complete` して Future を待ちます。
 - ClientNode 自体は上記の通り component で動かしているので「(外側の) spin 中に (別の Executor で) spin」して Future を待つことができます。
 - ただし、本質的には 1 thread なので「Future の完了を待つ間、(外側の Executor の) 別の callback を処理する」ことはできません。
+
+
 
 ```
 class ClientNode : public rclcpp::Node
