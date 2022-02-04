@@ -15,11 +15,14 @@
 ## Run & Result
 
 ```
+# Build
+# do `colcon build` and `source setup.bash`
+
 # 1st console
-ros2 run sync_seq add_two_ints_server
+ros2 run sync_client_with_outer_spin add_two_ints_server
 
 # 2nd concole
-ros2 run sync_seq add_two_ints_client
+ros2 run sync_client_with_outer_spin add_two_ints_client
 ```
 
 client 側の実行結果例.
