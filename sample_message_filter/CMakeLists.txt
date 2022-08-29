@@ -29,7 +29,8 @@ endif()
 
 add_library(sample_message_filter SHARED
   src/sample_publisher.cpp
-  src/sample_subscriber.cpp)
+  src/sample_subscriber.cpp
+  src/sample_synchronizer.cpp)
 ament_target_dependencies(sample_message_filter
   "rclcpp"
   "message_filters"
@@ -46,6 +47,10 @@ rclcpp_components_register_node(sample_message_filter
 rclcpp_components_register_node(sample_message_filter
   PLUGIN "sample_message_filter::SampleSubscriberWithHeader"
   EXECUTABLE subscriber_with_header)
+rclcpp_components_register_node(sample_message_filter
+  PLUGIN "sample_message_filter::SampleSyncWithHeader"
+  EXECUTABLE sync_with_header)
+
 
 install(TARGETS
   sample_message_filter)
